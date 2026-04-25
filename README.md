@@ -1,1 +1,49 @@
-# 123
+# Baby Feeding Agents
+
+A small, dependency-free Python implementation of a multi-agent baby feeding
+assistant. The package models the core agents needed for fast feed logging,
+dynamic scheduling, caregiver routing, reminder management, and shared real-time
+state projection.
+
+## Agents
+
+- `FeedLoggingAgent` records feed events and emits `feed_recorded`
+- `SchedulingAgent` recalculates the next feed window after every feed
+- `CaregiverRoutingAgent` assigns the next caregiver from shifts or overrides
+- `NotificationAgent` schedules/cancels reminders idempotently
+- `SyncStateAgent` maintains the shared dashboard projection for clients
+
+## Example
+
+```python
+from baby_feeding_agents import BabyFeedingAssistant
+
+assistant = BabyFeedingAssistant()
+assistant.configure_household(
+    baby_id="baby_1",
+    household_id="household_1",
+    caregivers=["Mom", "Dad"],
+    shifts=[
+        CaregiverShift("Dad", time(22, 0), time(2, 0)),
+        CaregiverShift("Mom", time(2, 0), time(6, 0)),
+    ],
+)
+assistant.configure_feeding_rule(
+    "baby_1",
+    min_minutes=120,
+    target_minutes=180,
+    max_minutes=240,
+)
+
+assistant.log_feed(
+    baby_id="baby_1",
+    household_id="household_1",
+    actor_id="Mom",
+    amount_ml=90,
+    idempotency_key="client-generated-uuid",
+)
+
+dashboard = assistant.dashboard("baby_1")
+print(dashboard.last_feed)
+print(dashboard.next_feed)
+```
