@@ -192,7 +192,7 @@ class CaregiverRoutingAgent:
             caregiver_ids = tuple(
                 shift.caregiver_id
                 for shift in self.store.shifts_for(event.household_id)
-                if shift.covers(schedule.target_at)
+                if shift.covers(schedule.earliest_at)
             )
             if caregiver_ids:
                 reason = "shift_rule"

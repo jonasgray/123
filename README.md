@@ -16,7 +16,9 @@ state projection.
 ## Example
 
 ```python
-from baby_feeding_agents import BabyFeedingAssistant
+from datetime import time
+
+from baby_feeding_agents import BabyFeedingAssistant, CaregiverShift
 
 assistant = BabyFeedingAssistant()
 assistant.configure_household(
