@@ -5,6 +5,7 @@ from contextlib import redirect_stdout
 
 from baby_feeding_agents import BabyFeedingAssistant, CaregiverShift
 from baby_feeding_agents.preview import run_scripted_demo
+from web_preview import build_state
 
 
 def dt(hour: int, minute: int = 0) -> datetime:
@@ -197,6 +198,15 @@ class BabyFeedingAssistantTests(unittest.TestCase):
         self.assertIn("Notification:", text)
         self.assertIn("Event flow:", text)
         self.assertEqual(assistant.dashboard("baby_1").last_feed.amount_ml, 90)
+
+    def test_web_preview_state_is_browser_friendly(self) -> None:
+        state = build_state()
+
+        self.assertIn("dashboard", state)
+        self.assertIn("events", state)
+        self.assertIn("last_feed", state["dashboard"])
+        self.assertIn("next_feed", state["dashboard"])
+        self.assertIn("pending_notifications", state["dashboard"])
 
 
 if __name__ == "__main__":

@@ -52,6 +52,21 @@ print(dashboard.next_feed)
 
 ## Preview
 
+Run a browser preview:
+
+```bash
+python3 web_preview.py
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+The browser preview has buttons for logging feeds, assigning Mom or Dad, marking
+reminders missed, and watching the agent event flow update.
+
 Run a scripted preview:
 
 ```bash
