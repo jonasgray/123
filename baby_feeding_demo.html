@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Baby Feeding Assistant Demo</title>
+  <style>
+    :root {
+      font-family: Arial, sans-serif;
+      background: #f7f4ef;
+      color: #27231f;
+    }
+    body {
+      margin: 0;
+      padding: 22px;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 12px 30px rgba(50, 40, 30, 0.12);
+      margin-bottom: 16px;
+      padding: 22px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 30px;
+    }
+    h2 {
+      color: #695f55;
+      font-size: 18px;
+      margin: 0 0 10px;
+    }
+    .big {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+    .muted {
+      color: #695f55;
+    }
+    .grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+    button {
+      background: #f1dfc8;
+      border: 0;
+      border-radius: 16px;
+      color: #27231f;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 700;
+      padding: 18px;
+    }
+    button.primary {
+      background: #2f6f5e;
+      color: #fff;
+      font-size: 20px;
+      min-height: 76px;
+    }
+    input {
+      border: 1px solid #ddd3c8;
+      border-radius: 14px;
+      box-sizing: border-box;
+      font-size: 18px;
+      margin-bottom: 10px;
+      padding: 16px;
+      width: 100%;
+    }
+    .event {
+      background: #fbf8f4;
+      border-left: 4px solid #2f6f5e;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      margin: 6px 0;
+      padding: 8px 0 8px 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <h1>Baby Feeding Assistant</h1>
+      <div class="muted">Standalone click-through demo. No Terminal needed.</div>
+    </div>
+
+    <div class="card">
+      <h2>Last feed</h2>
+      <div id="lastFeed" class="big">No feed logged yet</div>
+      <div id="lastFeedMeta" class="muted">Tap the big button when baby eats.</div>
+    </div>
+
+    <div class="card">
+      <h2>Next feed</h2>
+      <div id="nextFeed" class="big">Waiting for first feed</div>
+      <div id="assignment" class="muted"></div>
+      <div id="notification" class="muted">Reminder: none scheduled</div>
+    </div>
+
+    <div class="card">
+      <h2>Fast logging</h2>
+      <button class="primary" onclick="logFeed(90)">Log 90 mL now</button>
+      <div style="height: 12px"></div>
+      <input id="amount" type="number" min="1" placeholder="Custom amount in mL" />
+      <button onclick="logCustomFeed()">Log custom feed</button>
+    </div>
+
+    <div class="card">
+      <h2>Caregiver coordination</h2>
+      <div class="grid">
+        <button onclick="assignCaregiver('dad')">Dad takes next</button>
+        <button onclick="assignCaregiver('mom')">Mom takes next</button>
+        <button onclick="markMissed()">Mark reminder missed</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Agent event flow</h2>
+      <div id="events" class="muted">No events yet.</div>
+    </div>
+  </main>
+
+  <script>
+    const state = {
+      lastFeed: null,
+      nextFeed: null,
+      notification: null,
+      events: []
+    };
+
+    function logFeed(amountMl) {
+      const now = new Date();
+      state.lastFeed = {
+        amountMl,
+        occurredAt: now,
+        recordedBy: 'mom'
+      };
+      emit('feed_recorded', `mom logged ${amountMl} mL`);
+
+      const earliestAt = addMinutes(now, 120);
+      const targetAt = addMinutes(now, 180);
+      const latestAt = addMinutes(now, 240);
+      state.nextFeed = {
+        earliestAt,
+        targetAt,
+        latestAt,
+        assignedCaregivers: caregiversFor(earliestAt),
+        assignmentReason: 'shift_rule'
+      };
+      emit('next_feed_scheduled', 'next feeding window recalculated');
+      emit('caregiver_assigned', `${state.nextFeed.assignedCaregivers.join(', ')} assigned`);
+
+      state.notification = {
+        purpose: 'next_feed_reminder',
+        recipientIds: state.nextFeed.assignedCaregivers,
+        sendAt: targetAt,
+        status: 'scheduled'
+      };
+      emit('notification_scheduled', 'old reminders cancelled and new reminder scheduled');
+      emit('state_updated', 'both caregivers see the same latest state');
+      render();
+    }
+
+    function logCustomFeed() {
+      const input = document.getElementById('amount');
+      const amount = Number(input.value);
+      if (!amount || amount <= 0) {
+        alert('Enter an amount in mL first.');
+        return;
+      }
+      logFeed(amount);
+      input.value = '';
+    }
+
+    function assignCaregiver(caregiverId) {
+      if (!state.nextFeed) {
+        alert('Log a feed first, then assign the next feed.');
+        return;
+      }
+      state.nextFeed.assignedCaregivers = [caregiverId];
+      state.nextFeed.assignmentReason = 'manual_override';
+      state.notification = {
+        purpose: 'next_feed_reminder',
+        recipientIds: [caregiverId],
+        sendAt: state.nextFeed.targetAt,
+        status: 'scheduled'
+      };
+      emit('caregiver_assigned', `${caregiverId} manually assigned`);
+      emit('notification_scheduled', `reminder moved to ${caregiverId}`);
+      emit('state_updated', 'assignment updated for both caregivers');
+      render();
+    }
+
+    function markMissed() {
+      if (!state.notification || state.notification.status !== 'scheduled') {
+        alert('There is no scheduled reminder yet. Log a feed first.');
+        return;
+      }
+      state.notification.status = 'missed';
+      emit('feed_reminder_missed', 'scheduled reminder was missed');
+      state.notification = {
+        purpose: 'missed_feed_escalation',
+        recipientIds: ['mom', 'dad'],
+        sendAt: new Date(),
+        status: 'scheduled'
+      };
+      emit('notification_scheduled', 'escalation sent to both caregivers');
+      emit('state_updated', 'missed reminder is visible to both caregivers');
+      render();
+    }
+
+    function caregiversFor(date) {
+      const hour = date.getHours();
+      if (hour >= 22 || hour < 2) return ['dad'];
+      if (hour >= 2 && hour < 6) return ['mom'];
+      return ['mom', 'dad'];
+    }
+
+    function addMinutes(date, minutes) {
+      return new Date(date.getTime() + minutes * 60 * 1000);
+    }
+
+    function emit(type, detail) {
+      state.events.push({type, detail});
+    }
+
+    function formatDate(date) {
+      return date.toLocaleString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+
+    function render() {
+      if (state.lastFeed) {
+        document.getElementById('lastFeed').textContent = `${state.lastFeed.amountMl} mL`;
+        document.getElementById('lastFeedMeta').textContent =
+          `${formatDate(state.lastFeed.occurredAt)} · logged by ${state.lastFeed.recordedBy}`;
+      }
+
+      if (state.nextFeed) {
+        document.getElementById('nextFeed').textContent =
+          `${formatDate(state.nextFeed.earliestAt)} - ${formatDate(state.nextFeed.latestAt)}`;
+        document.getElementById('assignment').textContent =
+          `Assigned: ${state.nextFeed.assignedCaregivers.join(', ')} (${state.nextFeed.assignmentReason})`;
+      }
+
+      document.getElementById('notification').textContent = state.notification
+        ? `Reminder: ${state.notification.purpose} to ${state.notification.recipientIds.join(', ')} at ${formatDate(state.notification.sendAt)}`
+        : 'Reminder: none scheduled';
+
+      document.getElementById('events').innerHTML = state.events.length
+        ? state.events.slice().reverse().map(event =>
+            `<div class="event">${event.type}<br><span class="muted">${event.detail}</span></div>`
+          ).join('')
+        : 'No events yet.';
+    }
+  </script>
+</body>
+</html>
