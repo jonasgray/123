@@ -324,10 +324,22 @@ def build_state() -> dict[str, object]:
             ],
         },
         "events": [
-            {"type": event.type, "payload": event.payload}
+            {"type": event.type, "payload": json_safe(event.payload)}
             for event in assistant.bus.published_events[-20:]
         ],
     }
+
+
+def json_safe(value):
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, tuple):
+        return [json_safe(item) for item in value]
+    if isinstance(value, list):
+        return [json_safe(item) for item in value]
+    if isinstance(value, dict):
+        return {key: json_safe(item) for key, item in value.items()}
+    return value
 
 
 def feed_to_json(feed) -> dict[str, object] | None:

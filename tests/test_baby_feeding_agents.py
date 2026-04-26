@@ -1,4 +1,5 @@
 import io
+import json
 import unittest
 from datetime import datetime, time, timedelta, timezone
 from contextlib import redirect_stdout
@@ -207,6 +208,7 @@ class BabyFeedingAssistantTests(unittest.TestCase):
         self.assertIn("last_feed", state["dashboard"])
         self.assertIn("next_feed", state["dashboard"])
         self.assertIn("pending_notifications", state["dashboard"])
+        json.dumps(state)
 
 
 if __name__ == "__main__":
