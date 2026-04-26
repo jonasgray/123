@@ -49,3 +49,21 @@ dashboard = assistant.dashboard("baby_1")
 print(dashboard.last_feed)
 print(dashboard.next_feed)
 ```
+
+## Preview
+
+Run a scripted preview:
+
+```bash
+python3 preview.py
+```
+
+Run an interactive terminal preview:
+
+```bash
+python3 preview.py --interactive
+```
+
+The scripted preview starts with two caregivers, overnight shifts, a sample feed,
+and the agent event log so you can see the feed logging, scheduling, caregiver
+routing, notification, and sync agents coordinating.

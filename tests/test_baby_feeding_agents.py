@@ -1,7 +1,10 @@
+import io
 import unittest
 from datetime import datetime, time, timedelta, timezone
+from contextlib import redirect_stdout
 
 from baby_feeding_agents import BabyFeedingAssistant, CaregiverShift
+from baby_feeding_agents.preview import run_scripted_demo
 
 
 def dt(hour: int, minute: int = 0) -> datetime:
@@ -180,6 +183,20 @@ class BabyFeedingAssistantTests(unittest.TestCase):
         dashboard = assistant.dashboard("baby_1")
         self.assertEqual(dashboard.next_feed.target_at, dt(22, 30) + timedelta(hours=3))
         self.assertEqual(dashboard.next_feed.assigned_caregivers, ("dad",))
+
+    def test_scripted_preview_prints_core_agent_output(self) -> None:
+        output = io.StringIO()
+
+        with redirect_stdout(output):
+            assistant = run_scripted_demo()
+
+        text = output.getvalue()
+        self.assertIn("Baby Feeding Agent Preview", text)
+        self.assertIn("Last feed:", text)
+        self.assertIn("Next feed:", text)
+        self.assertIn("Notification:", text)
+        self.assertIn("Event flow:", text)
+        self.assertEqual(assistant.dashboard("baby_1").last_feed.amount_ml, 90)
 
 
 if __name__ == "__main__":
