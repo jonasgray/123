@@ -52,6 +52,15 @@ print(dashboard.next_feed)
 
 ## Preview
 
+If you are running this on your own computer, first download this branch:
+
+```bash
+cd ~/Desktop
+git clone https://github.com/jonasgray/123.git baby-feeding-preview
+cd baby-feeding-preview
+git checkout cursor/baby-feeding-agents-708f
+```
+
 Run a browser preview:
 
 ```bash
