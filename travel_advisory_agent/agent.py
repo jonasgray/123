@@ -5,6 +5,7 @@ from html import unescape
 from html.parser import HTMLParser
 import re
 from typing import Iterable, Protocol
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
@@ -105,7 +106,7 @@ class TravelAdvisoryAgent:
         except ElementTree.ParseError as exc:
             raise AdvisoryError("State Department advisory feed returned invalid XML.") from exc
         except OSError as exc:
-            raise AdvisoryError("Could not fetch the State Department advisory feed.") from exc
+            raise AdvisoryError(_fetch_error_message(exc)) from exc
 
         advisories: list[TravelAdvisory] = []
         seen_destinations: set[str] = set()
@@ -173,6 +174,25 @@ def _clean_html(value: str) -> str:
     text = " ".join(parser.text())
     text = re.sub(r"\s+([,.;:!?])", r"\1", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def _fetch_error_message(exc: OSError) -> str:
+    if isinstance(exc, HTTPError):
+        return f"Could not fetch the State Department advisory feed: HTTP {exc.code}."
+
+    reason = getattr(exc, "reason", exc)
+    detail = str(reason).strip()
+    message = "Could not fetch the State Department advisory feed"
+    if detail:
+        message = f"{message}: {detail}"
+
+    if "CERTIFICATE_VERIFY_FAILED" in detail or "certificate verify failed" in detail.lower():
+        message = (
+            f"{message}. On macOS, run the Python 'Install Certificates.command' "
+            "application, then try again."
+        )
+
+    return f"{message}."
 
 
 def _shorten(value: str, limit: int = 700) -> str:

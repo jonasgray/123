@@ -1,9 +1,12 @@
 import io
+import ssl
 import textwrap
 import unittest
 from contextlib import redirect_stdout
+from urllib.error import URLError
 
 from travel_advisory_agent import (
+    AdvisoryError,
     AdvisoryNotFound,
     TravelAdvisoryAgent,
 )
@@ -98,6 +101,16 @@ class StateDepartmentTravelAgentTest(unittest.TestCase):
             print(_format_advisory(advisory, summary_limit=None))
 
         self.assertIn("Source: https://travel.state.gov/haiti", buffer.getvalue())
+
+    def test_fetch_error_includes_underlying_reason(self):
+        class BrokenClient:
+            def fetch(self):
+                raise URLError(ssl.SSLCertVerificationError("certificate verify failed"))
+
+        agent = TravelAdvisoryAgent(client=BrokenClient())
+
+        with self.assertRaisesRegex(AdvisoryError, "certificate verify failed"):
+            agent.lookup("Haiti")
 
 
 if __name__ == "__main__":
