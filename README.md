@@ -52,6 +52,15 @@ print(dashboard.next_feed)
 
 ## Preview
 
+Easiest non-technical preview:
+
+1. Download this branch as a ZIP file.
+2. Unzip it.
+3. Double-click `baby_feeding_demo.html`.
+
+That standalone demo opens directly in your browser and does not require Terminal
+or Python.
+
 If you are running this on your own computer, first download this branch:
 
 ```bash
