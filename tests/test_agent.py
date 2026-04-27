@@ -102,6 +102,13 @@ class StateDepartmentTravelAgentTest(unittest.TestCase):
 
         self.assertIn("Source: https://travel.state.gov/haiti", buffer.getvalue())
 
+    def test_format_advisory_can_include_greeting(self):
+        advisory = self.agent.lookup("Haiti")
+        output = _format_advisory(advisory, greeting="Hello")
+
+        self.assertTrue(output.startswith("Hello\n"))
+        self.assertIn("Destination: Haiti", output)
+
     def test_fetch_error_includes_underlying_reason(self):
         class BrokenClient:
             def fetch(self):

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from html import unescape
 from html.parser import HTMLParser
+import random
 import re
 from typing import Iterable, Protocol
 from urllib.error import HTTPError, URLError
@@ -30,6 +31,13 @@ RISK_GUIDELINES = {
         "The highest level of risk, typically indicating life-threatening conditions or a high likelihood of danger.",
     ),
 }
+
+GREETINGS = (
+    "Hello!",
+    "Hi there!",
+    "Greetings!",
+    "Travel advisory ready.",
+)
 
 
 class AdvisoryError(RuntimeError):
@@ -202,8 +210,17 @@ def _shorten(value: str, limit: int = 700) -> str:
     return value[: limit - 3].rsplit(" ", 1)[0].rstrip(".,;:") + "..."
 
 
-def _format_advisory(advisory: TravelAdvisory, summary_limit: int | None = 700) -> str:
+def _random_greeting() -> str:
+    return random.choice(GREETINGS)
+
+
+def _format_advisory(
+    advisory: TravelAdvisory,
+    summary_limit: int | None = 700,
+    greeting: str | None = None,
+) -> str:
     lines = [
+        greeting or _random_greeting(),
         f"Destination: {advisory.destination}",
         f"Risk Level: {advisory.risk_level}",
         f"Guidance: {advisory.guidance}",
