@@ -7,11 +7,13 @@ import random
 import re
 from typing import Iterable, Protocol
 from urllib.error import HTTPError, URLError
+from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
 
 TRAVEL_ADVISORY_RSS_URL = "https://travel.state.gov/_res/rss/TAsTWs.xml"
+TRAVEL_ADVISORIES_PAGE_URL = "https://travel.state.gov/en/international-travel/travel-advisories.html"
 
 RISK_GUIDELINES = {
     1: (
@@ -96,7 +98,7 @@ class TravelAdvisoryAgent:
                 return advisory
 
         for advisory in advisories:
-            if normalized_request in _normalize_destination(advisory.destination):
+            if _destination_matches(normalized_request, advisory.destination):
                 return advisory
 
         available = ", ".join(advisory.destination for advisory in advisories[:10])
@@ -132,6 +134,14 @@ class TravelAdvisoryAgent:
             advisories.append(advisory)
 
         return advisories
+
+    def list_advisory_page_rows(self) -> list[TravelAdvisory]:
+        try:
+            html = StateDepartmentPageClient().fetch()
+        except OSError as exc:
+            raise AdvisoryError(_fetch_error_message(exc)) from exc
+
+        return _parse_advisory_page(html)
 
 
 def _parse_item(item: ElementTree.Element) -> TravelAdvisory | None:
@@ -173,6 +183,17 @@ def _normalize_destination(destination: str) -> str:
     normalized = re.sub(r"&", " and ", normalized)
     normalized = re.sub(r"[^a-z0-9]+", " ", normalized)
     return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _destination_matches(normalized_request: str, destination: str) -> bool:
+    normalized_destination = _normalize_destination(destination)
+    if normalized_request in normalized_destination:
+        return True
+
+    # Some State Department titles group destinations, e.g.
+    # "Mainland China, Hong Kong & Macau - See Summaries".
+    destination_parts = re.split(r"\b(?:and|see summaries)\b|[,/&-]+", destination, flags=re.IGNORECASE)
+    return normalized_request in {_normalize_destination(part) for part in destination_parts}
 
 
 def _clean_html(value: str) -> str:

@@ -45,6 +45,12 @@ SAMPLE_FEED = textwrap.dedent(
           <description>Older duplicate advisory.</description>
           <pubDate>Mon, 01 Apr 2024</pubDate>
         </item>
+        <item>
+          <title>Mainland China, Hong Kong &amp; Macau - See Summaries - Level 2: Exercise Increased Caution</title>
+          <link>https://travel.state.gov/china</link>
+          <description>Exercise increased caution when traveling to Mainland China.</description>
+          <pubDate>Wed, 27 Nov 2024</pubDate>
+        </item>
       </channel>
     </rss>
     """
@@ -77,10 +83,20 @@ class StateDepartmentTravelAgentTest(unittest.TestCase):
         self.assertEqual(advisory.level, 3)
         self.assertEqual(advisory.source_url, "https://travel.state.gov/trinidad-new")
 
+    def test_lookup_matches_destination_part_in_combined_advisory(self):
+        advisory = self.agent.lookup("China")
+
+        self.assertEqual(advisory.destination, "Mainland China, Hong Kong & Macau - See Summaries")
+        self.assertEqual(advisory.level, 2)
+        self.assertEqual(advisory.source_url, "https://travel.state.gov/china")
+
     def test_returns_all_advisories_once_per_destination(self):
         advisories = self.agent.list_advisories()
 
-        self.assertEqual([advisory.destination for advisory in advisories], ["Haiti", "Hungary", "Trinidad and Tobago"])
+        self.assertEqual(
+            [advisory.destination for advisory in advisories],
+            ["Haiti", "Hungary", "Trinidad and Tobago", "Mainland China, Hong Kong & Macau - See Summaries"],
+        )
 
     def test_raises_helpful_error_when_destination_is_unknown(self):
         with self.assertRaisesRegex(AdvisoryNotFound, "No State Department advisory found for 'Atlantis'"):
