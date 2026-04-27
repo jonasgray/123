@@ -14,7 +14,7 @@ This repository contains a small Python agent for surgical-center procurement te
 ## Run it
 
 ```bash
-python -m suture_price_agent \
+python3 -m suture_price_agent \
   --target-sutures 72 \
   --shipping 12.95 \
   --shipping 0 \
