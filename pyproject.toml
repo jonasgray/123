@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "state-department-travel-advisory-agent"
+version = "1.0.0"
+description = "Blocks agent for U.S. State Department travel advisory lookups."
+requires-python = ">=3.11"
+dependencies = [
+  "blocks-network",
+]
+
+[tool.setuptools.packages.find]
+include = ["travel_advisory_agent*"]
